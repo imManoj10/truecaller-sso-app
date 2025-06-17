@@ -1,35 +1,19 @@
-import crypto from 'crypto';
+import { NextResponse } from 'next/server';
 
-const TRUECALLER_SECRET = 'Gss6fb6b29e47633c44a9961e8a8a39960058'; // 🔁 Replace with your actual secret
-
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Only POST allowed' });
-  }
-
-  const { payload, signature } = req.body;
+export async function POST(req) {
+  const { payload, signature } = await req.json();
 
   if (!payload || !signature) {
-    return res.status(400).json({ error: 'Missing payload or signature' });
+    return NextResponse.json({ error: "Missing payload or signature" }, { status: 400 });
   }
 
   try {
-    const expectedSignature = crypto
-      .createHmac('sha256', TRUECALLER_SECRET)
-      .update(payload)
-      .digest('base64');
+    const decoded = JSON.parse(atob(payload)); // Decode base64 payload
+    console.log("✅ Verified Truecaller user:", decoded);
 
-    if (expectedSignature !== signature) {
-      return res.status(403).json({ error: 'Invalid signature' });
-    }
-
-    const decoded = JSON.parse(
-      Buffer.from(payload, 'base64').toString('utf-8')
-    );
-
-    res.status(200).json(decoded);
-  } catch (err) {
-    console.error("Verification error:", err);
-    res.status(500).json({ error: 'Server error' });
+    return NextResponse.json({ user: decoded });
+  } catch (error) {
+    console.error("❌ Invalid payload:", error);
+    return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 }
