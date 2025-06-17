@@ -15,7 +15,9 @@ export default function ProfilePage() {
     // If already stored, use it
     const stored = localStorage.getItem("truecallerProfile");
     if (stored) {
-      setUser(JSON.parse(stored));
+      const parsed = JSON.parse(stored);
+      console.log("🗂️ Loaded user from localStorage:", parsed); // ✅ Log stored data
+      setUser(parsed);
       return;
     }
 
@@ -28,13 +30,13 @@ export default function ProfilePage() {
       })
         .then((res) => res.json())
         .then((userData) => {
+          console.log("✅ Verified user from Truecaller:", userData); // ✅ Log fetched data
           localStorage.setItem("truecallerProfile", JSON.stringify(userData));
           setUser(userData);
-          // Remove payload/signature from URL for clean view
-          router.replace("/profile");
+          router.replace("/profile"); // Clean URL
         })
         .catch((err) => {
-          console.error("Verification failed:", err);
+          console.error("❌ Verification failed:", err);
           setError("Failed to verify Truecaller login.");
         });
     } else if (!stored) {
