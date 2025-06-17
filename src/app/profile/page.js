@@ -1,27 +1,23 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 
-export default function ProfilePage() {
+export default function HomePage() {
   const [user, setUser] = useState(null);
   const [error, setError] = useState("");
-  const router = useRouter();
+  const [checking, setChecking] = useState(true); // New flag to delay render
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const payload = params.get("payload");
     const signature = params.get("signature");
 
-    // If already stored, use it
     const stored = localStorage.getItem("truecallerProfile");
     if (stored) {
-      const parsed = JSON.parse(stored);
-      console.log("🗂️ Loaded user from localStorage:", parsed); // ✅ Log stored data
-      setUser(parsed);
+      setUser(JSON.parse(stored));
+      setChecking(false);
       return;
     }
 
-    // If payload & signature are present, verify
     if (payload && signature) {
       fetch("/api/verify-truecaller", {
         method: "POST",
@@ -30,32 +26,41 @@ export default function ProfilePage() {
       })
         .then((res) => res.json())
         .then((userData) => {
-          console.log("✅ Verified user from Truecaller:", userData); // ✅ Log fetched data
+          console.log("✅ Verified user from Truecaller:", userData);
           localStorage.setItem("truecallerProfile", JSON.stringify(userData));
           setUser(userData);
-          router.replace("/profile"); // Clean URL
+          window.history.replaceState({}, document.title, "/");
         })
         .catch((err) => {
           console.error("❌ Verification failed:", err);
           setError("Failed to verify Truecaller login.");
-        });
-    } else if (!stored) {
-      setError("No Truecaller login data found.");
+        })
+        .finally(() => setChecking(false));
+    } else {
+      setChecking(false);
+      if (!stored) setError("Please log in via Truecaller.");
     }
   }, []);
 
-  if (error) {
+  if (checking) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-red-600 font-semibold">
-        {error}
+      <div className="min-h-screen flex items-center justify-center text-gray-400">
+        Checking session...
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-gray-500">
-        Loading user data...
+      <div className="min-h-screen flex flex-col items-center justify-center text-gray-600">
+        <h1 className="text-2xl mb-4">Truecaller Login Required</h1>
+        <a
+          href="/truecaller-login"
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        >
+          Login with Truecaller
+        </a>
+        {error && <p className="text-red-500 mt-4">{error}</p>}
       </div>
     );
   }
@@ -69,6 +74,15 @@ export default function ProfilePage() {
         <p className="text-gray-600">📞 {user.phoneNumber}</p>
         {user.email && <p className="text-gray-600">📧 {user.email}</p>}
         <p className="text-sm text-gray-400 mt-4">(User ID: {user.id})</p>
+        <button
+          onClick={() => {
+            localStorage.removeItem("truecallerProfile");
+            window.location.href = "/";
+          }}
+          className="mt-6 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+        >
+          Logout
+        </button>
       </div>
     </div>
   );
