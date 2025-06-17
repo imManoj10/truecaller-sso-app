@@ -1,46 +1,36 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
-const ProfilePage = () => {
-  const [profile, setProfile] = useState(null);
+export default function ProfilePage() {
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     const stored = localStorage.getItem("truecallerProfile");
     if (stored) {
-      setProfile(JSON.parse(stored));
+      setUser(JSON.parse(stored));
     }
   }, []);
 
-  if (!profile) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-gray-500">
-        No user data found. Please login first.
-      </div>
-    );
+  if (!user) {
+    return <div className="p-6 text-center">No user found. Please login.</div>;
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-100 p-4">
-      <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border border-green-200">
-        <h1 className="text-3xl font-bold text-center text-green-700 mb-6">
-          👤 Truecaller Profile
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
+      <div className="bg-white rounded-xl shadow-lg p-6 max-w-md w-full text-center">
+        <h1 className="text-2xl font-bold mb-4">
+          Welcome, {user.firstName} {user.lastName}
         </h1>
-        <div className="flex flex-col items-center space-y-4">
+        <p className="text-gray-600 mb-2">📞 {user.phoneNumber}</p>
+        {user.email && <p className="text-gray-600 mb-2">📧 {user.email}</p>}
+        {user.profilePicture && (
           <img
-            src={profile.profilePicture}
+            src={user.profilePicture}
             alt="Profile"
-            className="w-24 h-24 rounded-full border-4 border-green-400 shadow-md"
+            className="w-28 h-28 rounded-full mx-auto mt-4 border"
           />
-          <p className="text-lg font-semibold text-gray-800">
-            {profile.firstName} {profile.lastName}
-          </p>
-          <p className="text-sm text-gray-600">Phone: {profile.phoneNumber}</p>
-          <p className="text-sm text-gray-600">Email: {profile.email}</p>
-          <p className="text-xs text-gray-500 mt-2">User ID: {profile.id}</p>
-        </div>
+        )}
       </div>
     </div>
   );
-};
-
-export default ProfilePage;
+}
