@@ -12,7 +12,7 @@ const App = () => {
     const partnerKey = "Gss6fb6b29e47633c44a9961e8a8a39960058"; // 🔁 Replace this
     const partnerName = "Elbrit";    // 🔁 Replace this
 
-    const truecallerUrl = `https://api.truecaller.com/v1/intent?requestNonce=${nonce}&partnerKey=${partnerKey}&partnerName=${partnerName}&ttl=180&lang=en`;
+    const truecallerUrl = `truecallersdk://truesdk/web_verify?requestNonce=${nonce}&partnerKey=${partnerKey}&partnerName=${partnerName}&ttl=180&lang=en`;
 
     if (/Android/i.test(navigator.userAgent)) {
       window.location.href = truecallerUrl;
