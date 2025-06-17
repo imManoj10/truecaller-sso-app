@@ -7,43 +7,51 @@ const App = () => {
   const [errorMessage, setErrorMessage] = useState("");
 
   // Trigger Truecaller login redirect (on Android)
-  useEffect(() => {
-    const nonce = Date.now().toString();
-    const partnerKey = "Gss6fb6b29e47633c44a9961e8a8a39960058"; // 🔁 Replace this
-    const partnerName = "Elbrit";    // 🔁 Replace this
+useEffect(() => {
+  const nonce = Date.now().toString();
+  const partnerKey = "Gss6fb6b29e47633c44a9961e8a8a39960058";
+  const partnerName = "Elbrit";
+  const sdkUrl = `truecallersdk://truesdk/web_verify?requestNonce=${nonce}&partnerKey=${partnerKey}&partnerName=${partnerName}&ttl=180&lang=en`;
 
-    const truecallerUrl = `truecallersdk://truesdk/web_verify?requestNonce=${nonce}&partnerKey=${partnerKey}&partnerName=${partnerName}&ttl=180&lang=en`;
+  if (/Android/i.test(navigator.userAgent)) {
+    const link = document.createElement("a");
+    link.href = sdkUrl;
+    link.style.display = "none";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } else {
+    setErrorMessage("Truecaller login only works on Android with the Truecaller app installed.");
+  }
+}, []);
 
-    if (/Android/i.test(navigator.userAgent)) {
-      window.location.href = truecallerUrl;
-    } else {
-      setErrorMessage("Truecaller login works only on Android with the Truecaller app.");
-    }
-  }, []);
 
   // Handle Truecaller callback
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const payload = params.get("payload");
-    const signature = params.get("signature");
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const payload = params.get("payload");
+  const signature = params.get("signature");
 
-    if (payload && signature) {
-      fetch("/api/verify-truecaller", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ payload, signature }),
+  if (payload && signature) {
+    fetch("/api/verify-truecaller", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ payload, signature }),
+    })
+      .then((res) => res.json())
+      .then((user) => {
+        console.log("✅ Verified user", user);
+        localStorage.setItem("truecallerProfile", JSON.stringify(user));
+        router.push("/profile");
       })
-        .then((res) => res.json())
-        .then((user) => {
-          localStorage.setItem("truecallerProfile", JSON.stringify(user));
-          router.push("/profile");
-        })
-        .catch((err) => {
-          console.error("Truecaller login verification failed:", err);
-          setErrorMessage("Verification failed. Please try again.");
-        });
-    }
-  }, []);
+      .catch((err) => {
+        console.error("❌ Verification failed", err);
+      });
+  } else {
+    console.warn("⚠️ No payload or signature found in URL");
+  }
+}, []);
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4 font-sans antialiased">
